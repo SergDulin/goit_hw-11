@@ -19,7 +19,7 @@ def add(*args):
         else:
             name.value += " " + arg
 
-    rec: Optional[Record] = address_book.get(str(name))
+    rec = address_book.data.get(str(name))
     if rec:
         for phone in phones:
             rec.add_phone(phone)
@@ -31,7 +31,6 @@ def add(*args):
         for phone in phones:
             rec.add_phone(phone)
         address_book.add_record(rec)
-
     return f"Contact {name}: {', '.join(str(num) for num in rec.phones)}{', ' + str(rec.birthday) if rec.birthday else ''} added successfully"
 
 @input_error
@@ -43,7 +42,7 @@ def change(*args):
     old_phone = Phone(args[1])
     new_phone = Phone(args[2])
 
-    rec = address_book.get(str(name))
+    rec = address_book.data.get(str(name))
     if rec:
         rec.change_phone(old_phone, new_phone)
     else:
@@ -56,11 +55,11 @@ def phone(*args):
     if len(args) != 1:
         raise ValueError("Please provide the name")
 
-    name_str = str(args[0]).capitalize()
+    keyword = args[0].capitalize()
 
     matches = []
-    for record in address_book.values():
-        if name_str in str(record.name).capitalize():
+    for record in address_book:
+        if keyword in str(record.name).capitalize():
             matches.append(record)
 
     result = ""
@@ -68,8 +67,7 @@ def phone(*args):
         for record in matches:
             result += str(record) + "\n"
     else:
-        raise KeyError(f"Contact '{name_str}' not found in address book")
-
+        raise KeyError(f"Contact '{keyword}' not found in address book")
     return result
 
 @input_error
@@ -78,7 +76,7 @@ def show_all(*args):
         return "There are no contacts saved."
 
     result = ""
-    for record in address_book.values():
+    for record in address_book:
         result += str(record) + "\n"
 
     return result
@@ -92,13 +90,14 @@ def goodbye_command(*args):
 def no_command(*args):
     return "Invalid command. Please try again."
 
-command_handlers = {add: ("add", ),
-                    change: ("change",),
-                    phone: ("phone",),
-                    show_all: ("show all", ),
-                    hello_command: ("hello", ),
-                    goodbye_command: ("good bye", "close", "exit")
-                    }
+command_handlers = {
+    add: ("add",),
+    change: ("change",),
+    phone: ("phone",),
+    show_all: ("show all",),
+    hello_command: ("hello",),
+    goodbye_command: ("good bye", "close", "exit")
+}
 
 def komand(user_input):
     for command, keywords in command_handlers.items():
@@ -109,7 +108,7 @@ def komand(user_input):
 
 def main():
     while True:
-        user_input = input(">>> ")
+        user_input = input("Enter a command: ")
         func, data = komand(user_input)
         print(func(*data))
         if func == goodbye_command:

@@ -1,4 +1,3 @@
-from collections import UserDict
 from datetime import datetime
 from typing import Optional
 
@@ -21,6 +20,7 @@ class Field:
     def __repr__(self) -> str:
         return str(self)
 
+
 class Name(Field):
     def __init__(self, value):
         self._value = None
@@ -34,12 +34,14 @@ class Name(Field):
     def value(self, new_value):
         self._value = " ".join(word.capitalize() for word in new_value.split())
 
+
 class Phone(Field):
     @Field.value.setter
     def value(self, new_value):
         if not new_value.startswith("+380") or not new_value[1:].isdigit() or len(new_value) != 13:
             raise ValueError("Invalid phone number")
         self._value = new_value
+
 
 class Birthday(Field):
     @Field.value.setter
@@ -56,6 +58,7 @@ class Birthday(Field):
         if self.value:
             return datetime.strptime(self.value, "%d.%m.%Y").date()
         return None
+
 
 class Record:
     def __init__(self, name: Name):
@@ -89,10 +92,24 @@ class Record:
         days_until_birthday = f", Days until the next birthday: {self.days_to_birthday()}" if self.birthday else ""
         return f"{name_str}: {phone_numbers}{birthday_str}{days_until_birthday}"
 
-class AddressBook(UserDict):
+
+class AddressBook:
+    def __init__(self):
+        self.data = {}
+
     def add_record(self, record: Record):
         self.data[str(record.name)] = record
         return f"Contact {record.name}: {', '.join(str(p) for p in record.phones)}{', ' + str(record.birthday) if record.birthday else ''} added successfully"
+
+    def __iter__(self):
+        self._iter_keys = list(self.data.keys())
+        return self
+
+    def __next__(self):
+        if len(self._iter_keys) == 0:
+            raise StopIteration
+        key = self._iter_keys.pop(0)
+        return self.data[key]
 
 def input_error(func):
     def wrapper(*args, **kwargs):
@@ -100,5 +117,4 @@ def input_error(func):
             return func(*args, **kwargs)
         except (KeyError, ValueError, IndexError) as e:
             return str(e)
-
     return wrapper
